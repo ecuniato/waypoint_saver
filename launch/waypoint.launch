@@ -1,0 +1,7 @@
+<launch>
+    <node name="waypoint_saver_node" type="waypoint_saver_node" pkg="waypoint_saver" output="screen">
+        <remap from="odom_topic" to="/kea/msf_core/odometry"/>
+        <remap from="workpiece_transform_topic" to="/nail/vrpn_client/raw_transform"/>
+    </node>
+
+</launch>

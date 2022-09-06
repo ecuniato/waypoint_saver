@@ -1,0 +1,16 @@
+order_rpy: 1                 # 0 for yaw-pitch-roll, 1 for roll-pitch-yaw
+forces: True                 # Use force reference for each waypoint
+torques: False               # Use torque reference (not implemented)
+times: False                 # True: Use the segment time specified for each point below
+velocity_constraints: True   # True: Stop at specified waypoints, False: Interpolate between waypoints
+constant_velocity: False     # True: Use constant velocity, based on either the times set below or set automatically
+use_workpiece_frame: True    # True: Use position and attitude setpoints relative to workpiece frame.
+v_max: 0.5                   # Maximum velocity
+a_max: 0.5                   # Maximum acceleration
+
+# Note: For this trajectory, the workpiece frame is aligned such that its x axis points into the wall, y to the left, and z up
+# I.e. position the workpiece frame in the bottom right corner of the whiteboard!
+# (If we consider the workpiece to be a whiteboard attached to a wall)
+
+points:
+	- {pos: [-2.59,1.13,-0.73], att: [0.03,-0.02,-2.99], force: [0,0,0], stop: True, time: 1.0}

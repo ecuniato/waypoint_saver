@@ -1,7 +1,0 @@
-<launch>
-    <node name="waypoint_saver_node" type="waypoint_saver_node" pkg="waypoint_saver" output="screen">
-        <remap from="odom_topic" to="/kea/rgbd/camera_depth/depth/points"/>
-        <remap from="workpiece_transform_topic" to="/kea/rgbd/camera_depth/depth/points"/>
-    </node>
-
-</launch>

@@ -18,11 +18,13 @@
 #include <ros/package.h>
 #include <time.h> /* time_t, struct tm, time, localtime, strftime */
 
-class WaypointSaver {
+class WaypointSaver
+{
 
 public:
   WaypointSaver(ros::NodeHandle &nh, ros::NodeHandle &nh_private)
-      : nh_(nh), nh_private_(nh_private) {
+      : nh_(nh), nh_private_(nh_private)
+  {
     got_odom_ = got_workpiece_ = false;
 
     std::string path = ros::package::getPath("waypoint_saver");
@@ -39,7 +41,7 @@ public:
     intro_buffer << intro_file.rdbuf();
     intro_file.close();
 
-    traj_file_ << intro_buffer.str();
+    traj_file_ << intro_buffer.str() << std::flush;
 
     odom_sub_ = nh.subscribe("odom_topic", 1, &WaypointSaver::odomCb, this);
     workpiece_sub_ = nh.subscribe("workpiece_transform_topic", 1,
@@ -48,19 +50,20 @@ public:
 
   ~WaypointSaver() { traj_file_.close(); }
 
-  void run();
-
-  // Subscribers
-  void odomCb(const nav_msgs::OdometryConstPtr &odom_msg);
-  void
-  workpieceCb(const geometry_msgs::TransformStampedConstPtr &workpiece_msg);
-
   void updateTransform();
 
   // Utility
   bool yamlSaver();
+  bool isTransformReady()
+  {
+    return got_odom_ && got_workpiece_;
+  }
 
 private:
+  // Subscribers
+  void odomCb(const nav_msgs::OdometryConstPtr &odom_msg);
+  void
+  workpieceCb(const geometry_msgs::TransformStampedConstPtr &workpiece_msg);
   ros::NodeHandle nh_, nh_private_;
 
   // Sync

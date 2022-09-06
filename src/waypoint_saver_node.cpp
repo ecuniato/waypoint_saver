@@ -1,35 +1,52 @@
 #include <waypoint_saver/waypoint_saver_node.h>
 
-static std::string getAnswer() {
+static std::string getAnswer()
+{
   std::string answer;
   std::cin >> answer;
+  // getline(std::cin, answer);
+  // if (std::cin.fail() || std::cin.eof())
+  // {
+  //   std::cin.clear(); // reset cin state
+  // }
   return answer;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   // Last argument is the default name of the node.
   ros::init(argc, argv, "waypoint_saver_node");
 
   ros::NodeHandle nh, nh_private("~");
-  WaypointSaver waypoint_saver_node(nh, nh_private);
+  WaypointSaver *waypoint_saver_node = new WaypointSaver(nh, nh_private);
 
-  // ros::Rate r(100);
+  ros::AsyncSpinner spinner(0);
+  spinner.start();
 
-  std::chrono::milliseconds timeout(10);
+  while (!waypoint_saver_node->isTransformReady())
+    ROS_WARN_THROTTLE(3, "Waiting for transforms...");
+
   ROS_INFO_STREAM("Press 'y' to save current position.");
-  std::future<std::string> future = std::async(getAnswer);
 
-  while (ros::ok()) {
-    if (future.wait_for(timeout) == std::future_status::ready)
-      if (future.get() == "y")
-        waypoint_saver_node.yamlSaver();
+  while (ros::ok())
+  {
+    std::string ans = getAnswer();
+    if (ans == "y")
+      waypoint_saver_node->yamlSaver();
+    else if (ans == "c")
+    {
+      delete waypoint_saver_node;
+      exit(0);
+    }
+    else
+      ROS_WARN("No waypoint saved. Press 'y' to save or 'c' to close.");
   }
-
-  ros::spin();
 }
 
-void WaypointSaver::updateTransform() {
-  if (got_odom_ && got_workpiece_) {
+void WaypointSaver::updateTransform()
+{
+  if (got_odom_ && got_workpiece_)
+  {
     transform_mutex_.lock();
     T_Workpiece_Odom_ = T_W_Workpiece_.inverse() * T_W_Odom_;
     transform_mutex_.unlock();
@@ -37,7 +54,9 @@ void WaypointSaver::updateTransform() {
 }
 
 // Subscribers
-void WaypointSaver::odomCb(const nav_msgs::OdometryConstPtr &odom_msg) {
+void WaypointSaver::odomCb(const nav_msgs::OdometryConstPtr &odom_msg)
+{
+  // ROS_WARN("got odom");
   Eigen::Vector3d pos(odom_msg->pose.pose.position.x,
                       odom_msg->pose.pose.position.y,
                       odom_msg->pose.pose.position.z);
@@ -53,7 +72,9 @@ void WaypointSaver::odomCb(const nav_msgs::OdometryConstPtr &odom_msg) {
 }
 
 void WaypointSaver::workpieceCb(
-    const geometry_msgs::TransformStampedConstPtr &workpiece_msg) {
+    const geometry_msgs::TransformStampedConstPtr &workpiece_msg)
+{
+  // ROS_WARN("got wp");
   Eigen::Vector3d pos(workpiece_msg->transform.translation.x,
                       workpiece_msg->transform.translation.y,
                       workpiece_msg->transform.translation.z);
@@ -68,7 +89,8 @@ void WaypointSaver::workpieceCb(
   updateTransform();
 }
 
-bool WaypointSaver::yamlSaver() {
+bool WaypointSaver::yamlSaver()
+{
   std::stringstream pose;
 
   transform_mutex_.lock();
@@ -77,10 +99,12 @@ bool WaypointSaver::yamlSaver() {
   transform_mutex_.unlock();
   Eigen::Vector3d rpy = rot.eulerAngles(0, 1, 2);
 
-  pose << "\t- {pos: [" << pos(0) << "," << pos(1) << "," << pos(2) << "]"
+  pose << std::endl
+       << std::fixed << std::setprecision(3)
+       << "\t- {pos: [" << pos(0) << "," << pos(1) << "," << pos(2) << "]"
        << ", att: [" << rpy(0) << "," << rpy(1) << "," << rpy(2)
-       << "], force: [0,0,0], stop: True, time: 1.0}" << std::endl;
-  traj_file_ << pose.str();
+       << "], force: [0,0,0], stop: True, time: 1.0}";
+  traj_file_ << pose.str() << std::flush;
 
   ROS_INFO_STREAM("New line added: " << pose.str());
   return true;
