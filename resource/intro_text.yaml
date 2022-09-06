@@ -1,4 +1,4 @@
-order_rpy: 0                 # 0 for yaw-pitch-roll, 1 for roll-pitch-yaw
+order_rpy: 1                 # 0 for yaw-pitch-roll, 1 for roll-pitch-yaw
 forces: True                 # Use force reference for each waypoint
 torques: False               # Use torque reference (not implemented)
 times: False                 # True: Use the segment time specified for each point below
